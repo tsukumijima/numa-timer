@@ -5,11 +5,14 @@ import { useStorage } from "@plasmohq/storage/hook"
 
 import {
   buildDailyTotalKey,
+  COLLAPSED_STORAGE_KEY,
+  DEFAULT_COLLAPSED,
   DEFAULT_SETTINGS,
   DOMAIN_LABEL,
   formatDuration,
   getDateKey,
   localAreaStorage,
+  normalizeCollapsed,
   normalizeSettings,
   resolveDomainFromHostname,
   SETTINGS_STORAGE_KEY,
@@ -79,7 +82,27 @@ const NumaTimer = () => {
   const flushInProgressRef = useRef(false)
   const storedDailySecondsRef = useRef(0)
   const [displaySeconds, setDisplaySeconds] = useState(0)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+
+  const [rawCollapsed, setCollapsedByDomain, { isLoading: isCollapsedLoading }] =
+    useStorage(
+      { key: COLLAPSED_STORAGE_KEY, instance: localAreaStorage },
+      DEFAULT_COLLAPSED
+    )
+  const collapsedByDomain = normalizeCollapsed(rawCollapsed)
+  const isCollapsed =
+    domain === undefined
+      ? false
+      : isCollapsedLoading
+        ? true
+        : collapsedByDomain[domain]
+
+  const toggleCollapsed = useCallback(() => {
+    if (domain === undefined) return
+    setCollapsedByDomain((prev) => {
+      const normalized = normalizeCollapsed(prev)
+      return { ...normalized, [domain]: !normalized[domain] }
+    })
+  }, [domain, setCollapsedByDomain])
 
   const dailyTotalStorageKey = domain
     ? buildDailyTotalKey(dateKey, domain)
@@ -232,7 +255,7 @@ const NumaTimer = () => {
           Numa Timer · {DOMAIN_LABEL[domain]}
         </div>
         <button
-          onClick={() => setIsCollapsed((prev) => !prev)}
+          onClick={toggleCollapsed}
           aria-label={
             isCollapsed ? "Expand timer panel" : "Collapse timer panel"
           }

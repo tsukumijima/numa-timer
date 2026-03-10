@@ -21,7 +21,20 @@ export const DEFAULT_SETTINGS: NumaTimerSettings = {
 }
 
 export const SETTINGS_STORAGE_KEY = "numa-timer:settings:v1"
+export const COLLAPSED_STORAGE_KEY = "numa-timer:collapsed:v1"
 export const DAILY_TOTAL_STORAGE_PREFIX = "numa-timer:daily-total:v1"
+
+export const DEFAULT_COLLAPSED: Record<DomainKey, boolean> = {
+  youtube: false,
+  x: false
+}
+
+export const normalizeCollapsed = (
+  collapsed?: Record<DomainKey, boolean>
+): Record<DomainKey, boolean> => ({
+  youtube: collapsed?.youtube ?? DEFAULT_COLLAPSED.youtube,
+  x: collapsed?.x ?? DEFAULT_COLLAPSED.x
+})
 
 export const localAreaStorage = new Storage({ area: "local" })
 
