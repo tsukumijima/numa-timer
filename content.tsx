@@ -5,17 +5,17 @@ import { useStorage } from "@plasmohq/storage/hook"
 
 import {
   buildDailyTotalKey,
-  COLLAPSED_STORAGE_KEY,
-  DEFAULT_COLLAPSED,
   DEFAULT_SETTINGS,
+  DEFAULT_UI_STATE,
   DOMAIN_LABEL,
   formatDuration,
   getDateKey,
   localAreaStorage,
-  normalizeCollapsed,
   normalizeSettings,
+  normalizeUiState,
   resolveDomainFromHostname,
   SETTINGS_STORAGE_KEY,
+  UI_STATE_STORAGE_KEY,
   type DomainKey
 } from "~lib/numa-timer"
 
@@ -83,26 +83,31 @@ const NumaTimer = () => {
   const storedDailySecondsRef = useRef(0)
   const [displaySeconds, setDisplaySeconds] = useState(0)
 
-  const [rawCollapsed, setCollapsedByDomain, { isLoading: isCollapsedLoading }] =
-    useStorage(
-      { key: COLLAPSED_STORAGE_KEY, instance: localAreaStorage },
-      DEFAULT_COLLAPSED
-    )
-  const collapsedByDomain = normalizeCollapsed(rawCollapsed)
+  const [rawUiState, setUiState, { isLoading: isUiStateLoading }] = useStorage(
+    { key: UI_STATE_STORAGE_KEY, instance: localAreaStorage },
+    DEFAULT_UI_STATE
+  )
+  const uiState = normalizeUiState(rawUiState)
   const isCollapsed =
     domain === undefined
       ? false
-      : isCollapsedLoading
+      : isUiStateLoading
         ? true
-        : collapsedByDomain[domain]
+        : uiState.collapsed[domain]
 
   const toggleCollapsed = useCallback(() => {
     if (domain === undefined) return
-    setCollapsedByDomain((prev) => {
-      const normalized = normalizeCollapsed(prev)
-      return { ...normalized, [domain]: !normalized[domain] }
+    setUiState((prev) => {
+      const normalized = normalizeUiState(prev)
+      return {
+        ...normalized,
+        collapsed: {
+          ...normalized.collapsed,
+          [domain]: !normalized.collapsed[domain]
+        }
+      }
     })
-  }, [domain, setCollapsedByDomain])
+  }, [domain, setUiState])
 
   const dailyTotalStorageKey = domain
     ? buildDailyTotalKey(dateKey, domain)
